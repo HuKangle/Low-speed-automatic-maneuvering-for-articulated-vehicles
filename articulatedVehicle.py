@@ -259,11 +259,9 @@ class ArticulatedVehicle:
         y = abs(end_point_y - start_point_y)
         diagonal = math.sqrt((math.pow(x, 2) + math.pow(y, 2)))
         angle = math.acos(x/diagonal) #radians
-        #TODO consider the last position of the vehicle
+        adjust_to_the_head = abs(self.headAngle - angle) #TODO headAngle is in radians ?
 
-
-
-        return angle
+        return adjust_to_the_head
 
 
 
