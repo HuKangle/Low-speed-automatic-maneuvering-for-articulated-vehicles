@@ -7,7 +7,7 @@ from random import random
 
 class ArticulatedVehicle:
 
-    def __init__(self, plt):
+    def __init__(self, plt, start_point_x, start_point_y):
         self.plt = plt
         self.velocity = 0
         self.vx = 0
@@ -16,14 +16,8 @@ class ArticulatedVehicle:
         trailerH = 26
         self.headW = 30
         headH = 26
-        self.startPointX = 155
-        self.startPointY = 213
-        #self.trailerW = 6
-        #trailerH = 2
-        #self.headW = 3
-        #headH = 2
-        #self.startPointX = 10
-        #self.startPointY = 10
+        self.startPointX = start_point_x
+        self.startPointY = start_point_y
         self.headAngle = 0
         self.trailerAngle = 0
         self.max_v = 2
@@ -58,6 +52,45 @@ class ArticulatedVehicle:
 
     def move(self, vel, angle, dt):
         self.__updateHead(vel, angle, dt)
+
+    def set_start_position(self, theta):
+        oldX = self.startPointX
+        oldY = self.startPointY
+
+        points = self.truckHead.get_xy()
+        [x, y] = points[0]
+
+        _x = self.startPointX + (math.cos(theta) * (x - oldX)) - (math.sin(theta) * (y - oldY))
+        _y = self.startPointY + (math.sin(theta) * (x - oldX)) + (math.cos(theta) * (y - oldY))
+
+        t = np.array([_x, _y])
+        newPoints = np.array([t])
+
+        for i in range(1, len(points)):
+            [x, y] = points[i]
+            _x = self.startPointX + (math.cos(theta) * (x - oldX)) - (math.sin(theta) * (y - oldY))
+            _y = self.startPointY + (math.sin(theta) * (x - oldX)) + (math.cos(theta) * (y - oldY))
+            t = np.array([_x, _y])
+            newPoints = np.append(newPoints, [t], axis=0)
+
+        self.truckHead.set_xy(newPoints)
+        self.plt.pause(0.1)
+
+        t = np.array([_x, _y])
+        newV = np.array([t])
+        v = self.truckTrailer.get_xy()
+
+        for i in range(1, len(v)):
+            [x, y] = v[i]
+
+            _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
+            _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
+            t = np.array([_x, _y])
+            newV = np.append(newV, [t], axis=0)
+
+        self.truckTrailer.set_xy(newV)
+        self.plt.pause(0.1)
+
 
 
     def __updateHead(self, vel, angle, dt):
@@ -101,8 +134,26 @@ class ArticulatedVehicle:
             newPoints = np.append(newPoints, [t], axis=0)
 
         self.truckHead.set_xy(newPoints)
+        self.plt.pause(0.01)
         self.__updateTrailer(angleChange, oldX, oldY, dt)
-        print(self.headAngle)
+
+        v = self.truckTrailer.get_xy()
+        [x, y] = v[0]
+        _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
+        _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
+
+        t = np.array([_x, _y])
+        newV = np.array([t])
+
+        for i in range(1, len(v)):
+            [x, y] = v[i]
+
+            _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
+            _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
+            t = np.array([_x, _y])
+            newV = np.append(newV, [t], axis=0)
+
+        self.truckTrailer.set_xy(newV)
 
     def __updateTrailer(self, th, oldX, oldY, dt):
         v = self.truckTrailer.get_xy()
@@ -135,67 +186,64 @@ class ArticulatedVehicle:
             newV = np.append(newV, [t], axis=0)
 
         self.truckTrailer.set_xy(newV)
+        self.plt.pause(0.01)
 
     def move_on_path(self, rx, ry):
         straight_movements = 0  # backward or forward
         turn_movements = 0  # right or left
+
         angle = 0  # TODO
         vel = 0
-        for i in range((len(rx) - 1)):
-            x_start = rx[i]
-            y_start = ry[i]
-            theta_start = 2 * np.pi * random() - np.pi #TODO
-            x_goal = rx[i+1]
-            y_goal = ry[i+1]
-            theta_goal = 2 * np.pi * random() - np.pi #TODO
-            self.move_to_pose(x_start, y_start, theta_start, x_goal, y_goal, theta_goal)
+
+        for i in range(len(rx) - 1):
+            if rx[i + 1] > rx[i]:
+                if ry[i + 1] == ry[i]:
+                    # forward move on x
+                    print("X forward")
+                    angle = 0
+                    vel = 400
+                    straight_movements += 1
+                else:
+                    # find the new angle for turn
+                    print("X turn 1")
+                    angle = 60 #TODO while from 1 - 60
+                    vel = 400
+                    turn_movements += 1
+            elif rx[i + 1] == rx[i]:
+                if ry[i + 1] == ry[i]:
+                    # pointX(i) = pointX(i+1)
+                    continue
+                elif ry[i + 1] > ry[i]:
+                    # forward move on y
+                    print("Y forward")
+                    angle = 0
+                    vel = 400
+                    straight_movements += 1
+                else:
+                    # backward move on y
+                    print("Y backward")
+                    angle = 0
+                    vel = 400
+                    straight_movements += 1
+            else:
+                if ry[i + 1] == ry[i]:
+                    # backward move on x
+                    print("X backward")
+                    angle = 0
+                    vel = 400
+                    straight_movements += 1
+                else:
+                    # find the new angle for turn   !!!! dangerous case !!!! **** collapse danger
+                    print("turn 3")
+                    angle = 60
+                    vel = 600
+                    turn_movements += 1
+
+            self.move(vel, angle, 0.1)
+            self.plt.pause(0.01)
+
 
         return straight_movements, turn_movements
 
-    def move_to_pose(self, x_start, y_start, theta_start, x_goal, y_goal, theta_goal):
-        Kp_rho = 2
-        Kp_alpha = 30
-        Kp_beta = -5
-        dt = 0.01
 
-        x = x_start
-        y = y_start
-        theta = theta_start
-
-        x_diff = x_goal - x
-        y_diff = y_goal - y
-
-        x_traj, y_traj = [], []
-
-        rho = np.sqrt(x_diff ** 2 + y_diff ** 2)
-        while rho > 0.001:
-            x_traj.append(x)
-            y_traj.append(y)
-
-            x_diff = x_goal - x
-            y_diff = y_goal - y
-
-            rho = np.sqrt(x_diff ** 2 + y_diff ** 2)
-            alpha = (np.arctan2(y_diff, x_diff) -
-                     theta + np.pi) % (2 * np.pi) - np.pi
-            beta = (theta_goal - theta - alpha + np.pi) % (2 * np.pi) - np.pi
-
-            v = Kp_rho * rho
-            w = Kp_alpha * alpha + Kp_beta * beta
-
-            if alpha > np.pi / 2 or alpha < -np.pi / 2:
-                v = -v
-
-            theta = theta + w * dt
-            x = x + v * np.cos(theta) * dt
-            y = y + v * np.sin(theta) * dt
-            self.plt.pause(0.01)
-            degrees = np.rad2deg(theta)
-            self.move(v, degrees, dt)
-        return x_traj,y_traj
-
-    def redraw_vehicle(self, x_start, y_start):
-        #av = ArticulatedVehicle(self.plt)
-        self.startPointX = x_start
-        self.startPointY = y_start
 
