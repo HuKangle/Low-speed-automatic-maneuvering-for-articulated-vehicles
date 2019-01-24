@@ -192,22 +192,17 @@ class ArticulatedVehicle:
         straight_movements = 0  # backward or forward
         turn_movements = 0  # right or left
 
-        angle = 0  # TODO
-        vel = 0
-
         for i in range(len(rx) - 1):
             if rx[i + 1] > rx[i]:
                 if ry[i + 1] == ry[i]:
                     # forward move on x
                     print("X forward")
                     angle = 0
-                    vel = 400
                     straight_movements += 1
                 else:
                     # find the new angle for turn
                     print("X turn 1")
-                    angle = 60 #TODO while from 1 - 60
-                    vel = 400
+                    angle = self.find_the_angle(rx[i], ry[i], rx[i+1], ry[i+1])
                     turn_movements += 1
             elif rx[i + 1] == rx[i]:
                 if ry[i + 1] == ry[i]:
@@ -217,33 +212,59 @@ class ArticulatedVehicle:
                     # forward move on y
                     print("Y forward")
                     angle = 0
-                    vel = 400
                     straight_movements += 1
                 else:
                     # backward move on y
                     print("Y backward")
                     angle = 0
-                    vel = 400
                     straight_movements += 1
             else:
                 if ry[i + 1] == ry[i]:
                     # backward move on x
                     print("X backward")
                     angle = 0
-                    vel = 400
                     straight_movements += 1
                 else:
-                    # find the new angle for turn   !!!! dangerous case !!!! **** collapse danger
-                    print("turn 3")
-                    angle = 60
-                    vel = 600
+                    # !!!! dangerous case !!!! **** collapse danger
+                    print("turn dangerous")
+                    angle = self.find_the_angle(rx[i], ry[i], rx[i+1], ry[i+1])
                     turn_movements += 1
 
-            self.move(vel, angle, 0.1)
-            self.plt.pause(0.01)
-
+            self.loop_through_angle(angle)
 
         return straight_movements, turn_movements
+
+    def loop_through_angle(self, angle):
+        if angle == 0: # if angle = 0 then it is step ward or backward action
+            self.move(20, angle, 0.1)
+            self.plt.pause(.0001)
+
+        i = 0
+        while i < angle:
+            i += 1
+            if i < 60:
+                vel = 20
+                angle = -i
+            elif 60 <= i < 120:
+                vel = 20
+                angle = i - 60
+            else:
+                vel = 20
+                angle = 60
+            self.move(vel, angle, 0.1)
+            self.plt.pause(.0001)
+
+    def find_the_angle(self, start_point_x, start_point_y, end_point_x, end_point_y):
+        x = abs(end_point_x - start_point_x)
+        y = abs(end_point_y - start_point_y)
+        diagonal = math.sqrt((math.pow(x, 2) + math.pow(y, 2)))
+        angle = math.acos(x/diagonal) #radians
+        #TODO consider the last position of the vehicle
+
+
+
+        return angle
+
 
 
 
