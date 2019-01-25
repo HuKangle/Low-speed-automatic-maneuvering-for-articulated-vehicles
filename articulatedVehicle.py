@@ -1,8 +1,6 @@
 import math
 import numpy as np
 import matplotlib.patches as patches
-from random import random
-
 
 
 class ArticulatedVehicle:
@@ -52,46 +50,6 @@ class ArticulatedVehicle:
 
     def move(self, vel, angle, dt):
         self.__updateHead(vel, angle, dt)
-
-    def set_start_position(self, theta):
-        oldX = self.startPointX
-        oldY = self.startPointY
-
-        points = self.truckHead.get_xy()
-        [x, y] = points[0]
-
-        _x = self.startPointX + (math.cos(theta) * (x - oldX)) - (math.sin(theta) * (y - oldY))
-        _y = self.startPointY + (math.sin(theta) * (x - oldX)) + (math.cos(theta) * (y - oldY))
-
-        t = np.array([_x, _y])
-        newPoints = np.array([t])
-
-        for i in range(1, len(points)):
-            [x, y] = points[i]
-            _x = self.startPointX + (math.cos(theta) * (x - oldX)) - (math.sin(theta) * (y - oldY))
-            _y = self.startPointY + (math.sin(theta) * (x - oldX)) + (math.cos(theta) * (y - oldY))
-            t = np.array([_x, _y])
-            newPoints = np.append(newPoints, [t], axis=0)
-
-        self.truckHead.set_xy(newPoints)
-        self.plt.pause(0.1)
-
-        t = np.array([_x, _y])
-        newV = np.array([t])
-        v = self.truckTrailer.get_xy()
-
-        for i in range(1, len(v)):
-            [x, y] = v[i]
-
-            _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
-            _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
-            t = np.array([_x, _y])
-            newV = np.append(newV, [t], axis=0)
-
-        self.truckTrailer.set_xy(newV)
-        self.plt.pause(0.1)
-
-
 
     def __updateHead(self, vel, angle, dt):
         self.velocity = vel
@@ -177,74 +135,57 @@ class ArticulatedVehicle:
         for i in range(len(rx) - 1):
             if rx[i + 1] > rx[i]:
                 if ry[i + 1] == ry[i]:
-                    # forward move on x
                     print("X forward")
-                    angle = 0
                     straight_movements += 1
                 else:
-                    # find the new angle for turn
-                    print("X turn 1")
-                    angle = self.find_the_angle(rx[i], ry[i], rx[i+1], ry[i+1])
+                    print("turn 1")
                     turn_movements += 1
             elif rx[i + 1] == rx[i]:
                 if ry[i + 1] == ry[i]:
-                    # pointX(i) = pointX(i+1)
+                    print("P1 == P2")
                     continue
                 elif ry[i + 1] > ry[i]:
-                    # forward move on y
                     print("Y forward")
-                    angle = 0
                     straight_movements += 1
                 else:
-                    # backward move on y
                     print("Y backward")
-                    angle = 0
                     straight_movements += 1
             else:
                 if ry[i + 1] == ry[i]:
-                    # backward move on x
                     print("X backward")
-                    angle = 0
                     straight_movements += 1
                 else:
                     # !!!! dangerous case !!!! **** collapse danger
                     print("turn dangerous")
-                    angle = self.find_the_angle(rx[i], ry[i], rx[i+1], ry[i+1])
                     turn_movements += 1
 
-            self.loop_through_angle(angle)
+            angle = self.find_the_angle(rx[i], ry[i], rx[i + 1], ry[i + 1])
+            self.loop_through_angle(angle, rx[i + 1], ry[i + 1])
 
         return straight_movements, turn_movements
 
-    def loop_through_angle(self, angle):
-        if angle == 0: # if angle = 0 then it is step ward or backward action
+    def loop_through_angle(self, angle, x_to_reach, y_to_reach):
+        if angle == 0 and self.headAngle == 0:
             self.move(20, angle, 0.1)
             self.plt.pause(.0001)
 
         i = 0
-        while i < angle:
+        while self.headAngle < angle:
             i += 1
-            if i < 60:
-                vel = 20
-                angle = -i
-            elif 60 <= i < 120:
-                vel = 20
-                angle = i - 60
-            else:
-                vel = 20
-                angle = 60
-            self.move(vel, angle, 0.1)
+            self.move(20, i, 0.1)
             self.plt.pause(.0001)
+
+        while self.startPointX < x_to_reach:
+            self.move(20, 0, 0.1)
+
+        while self.startPointY < y_to_reach:
+            self.move(20, 0, 0.1)
 
     def find_the_angle(self, start_point_x, start_point_y, end_point_x, end_point_y):
         x = abs(end_point_x - start_point_x)
         y = abs(end_point_y - start_point_y)
         diagonal = math.sqrt((math.pow(x, 2) + math.pow(y, 2)))
-        angle = math.acos(x/diagonal) #radians
-        adjust_to_the_head = abs(self.headAngle - angle) #TODO headAngle is in radians ?
+        angle = math.acos(x / diagonal)
+        adjust_to_the_head = abs(self.headAngle - np.rad2deg(angle))
 
         return adjust_to_the_head
-
-
-
-
