@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import math
@@ -12,8 +13,6 @@ class Node:
         self.gscore = gscore
         self.fscore = fscore
 
-
-
 def reconstructPath(cameFrom, current):
     #print("reconstructing from ", current.x,current.y)
     totalPath = []
@@ -22,7 +21,7 @@ def reconstructPath(cameFrom, current):
         totalPath.append(current)
     return list(reversed(totalPath))
 
-def a_star(start,goal,graph):
+def a_star(start,goal,obstacles):
     closedNodes, openNodes = dict(), dict()
     openNodes[calc_index(start)] = start
     cameFrom = {}
@@ -47,9 +46,9 @@ def a_star(start,goal,graph):
             if n_id in closedNodes:
                 continue
 
-            if not verify_node(node,graph):
+            if is_collision(node,obstacles):
                 continue
-            
+
             node.fscore = node.gscore + calcHeuristic(goal, node)
 
             if n_id not in openNodes:
@@ -59,8 +58,6 @@ def a_star(start,goal,graph):
                     openNodes[n_id] = node
 
             cameFrom[node] = current
-            #plt.plot(node.x,node.y,"xc")
-            #plt.pause(0.0001)
 
 def calc_index(node):
     return node.y * 1152 + node.x
@@ -68,19 +65,20 @@ def calc_index(node):
 def calcHeuristic(a, b):
     return abs(a.x - b.x) + abs(a.y - b.y)
 
-def verify_node(node,graph):
-    #check that the vehicle can squeeze through
-    for i in range(16):
-        pos1 = graph[node.y+i][node.x+i]
-        pos2 = graph[node.y-i][node.x-i]
-        pos3 = graph[node.y][node.x-i]
-        pos4 = graph[node.y][node.x+i]
-        pos5 = graph[node.y-i][node.x]
-        pos6 = graph[node.y+i][node.x]
-        if pos1[0] == 0 or pos2[0] == 0 or pos3[0] == 0 or pos4[0] == 0 or pos5[0] == 0 or pos6[0] == 0:
-            return False
-    return True
-
+def is_collision(node, graph):
+    try:
+        for i in range(16):
+            pos1 = graph[node.y+i][node.x+i]
+            pos2 = graph[node.y-i][node.x-i]
+            pos3 = graph[node.y][node.x-i]
+            pos4 = graph[node.y][node.x+i]
+            pos5 = graph[node.y-i][node.x]
+            pos6 = graph[node.y+i][node.x]
+            if pos1[0] == 0 or pos2[0] == 0 or pos3[0] == 0 or pos4[0] == 0 or pos5[0] == 0 or pos6[0] == 0:
+                return True
+        return False
+    except IndexError:
+        return True
 
 def get_motion_model():
     # dx, dy, cost
@@ -103,8 +101,8 @@ def paint(nodeList, c):
         ys.append(n.y)
     plt.plot(xs,ys,c)
         
-def improved_astar(start,goal,graph):
-    p = a_star(start,goal,graph)
+def improved_astar(start,goal,obs):
+    p = a_star(start,goal,obs)
     paint(p,"-r")
     if len(p) > 2:
         for index, node in enumerate(p):
@@ -114,7 +112,7 @@ def improved_astar(start,goal,graph):
                 while True:
                     if (index+i < len(p)-2):
                         dtwo = p[index+i]
-                        if verify_line(node,dtwo,graph):
+                        if verify_line(node,dtwo,obs):
                             del p[index+i-1]
                         else:
                             break
@@ -135,68 +133,14 @@ def verify_line(startn,endn,graph):
             y = M*x + B
             if y < 0:
                 return True
-            for i in range(16):
-                pos1 = graph[int(y)+i][x+i]
-                pos2 = graph[int(y)-i][x-i]
-                pos3 = graph[int(y)][x-i]
-                pos4 = graph[int(y)][x+i]
-                pos5 = graph[int(y)-i][x]
-                pos6 = graph[int(y)+i][x]
-                if pos1[0] == 0 or pos2[0] == 0 or pos3[0] == 0 or pos4[0] == 0 or pos5[0] == 0 or pos6[0] == 0:
-                    return False  
+            if is_collision(Node(x,int(y),0,0), graph):
+                return False  
             x += 1
     else:
         while x > endn.x:
             y = M*x + B
-            for i in range(16):
-                pos1 = graph[int(y)+i][x+i]
-                pos2 = graph[int(y)-i][x-i]
-                pos3 = graph[int(y)][x-i]
-                pos4 = graph[int(y)][x+i]
-                pos5 = graph[int(y)-i][x]
-                pos6 = graph[int(y)+i][x]
-                if pos1[0] == 0 or pos2[0] == 0 or pos3[0] == 0 or pos4[0] == 0 or pos5[0] == 0 or pos6[0] == 0:
-                    return False
+            if is_collision(Node(x,int(y),0,0), graph):
+                return False  
             x -= 1
 
     return True
-
-def input_float(prompt):
-    while True:
-        try:
-            return float(input(prompt))
-        except ValueError:
-            print('That is not a valid number.')
-
-def main():
-    graph=mpimg.imread('firstedit.png')
-    fig,ax = plt.subplots(1)
-    imgplot = ax.imshow(graph)
-    av = ArticulatedVehicle(plt)
-    goal = Node(1046,30,0,0)
-    start = Node(200,480,0,0)
-    nodelist = improved_astar(start,goal,graph)
-    paint(nodelist, "-b")
-    #paint(nodelist,"xc")
-    i = 0
-    while(i < 400):
-        i+=1
-        if i < 60:
-            vel = 20
-            angle = -i
-        elif i >= 60 and i < 120:
-            vel = 20
-            angle = i-60
-        else:
-            vel = 20
-            angle = 60
-        av.move(vel,angle,0.1)
-        plt.pause(.0001)
-    #while(i < 400):
-    #    vel = 20
-    #    angle = input_float(">>>")
-    #    av.move(vel,angle,0.1)
-    #    plt.pause(.0001)
-    plt.show()
-
-main()
