@@ -137,24 +137,6 @@ class ArticulatedVehicle:
         self.plt.pause(0.01)
         self.__updateTrailer(angleChange, oldX, oldY, dt)
 
-        v = self.truckTrailer.get_xy()
-        [x, y] = v[0]
-        _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
-        _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
-
-        t = np.array([_x, _y])
-        newV = np.array([t])
-
-        for i in range(1, len(v)):
-            [x, y] = v[i]
-
-            _x = self.startPointX + math.cos(theta) * (x - oldX) - math.sin(theta) * (y - oldY)
-            _y = self.startPointY + math.sin(theta) * (x - oldX) + math.cos(theta) * (y - oldY)
-            t = np.array([_x, _y])
-            newV = np.append(newV, [t], axis=0)
-
-        self.truckTrailer.set_xy(newV)
-
     def __updateTrailer(self, th, oldX, oldY, dt):
         v = self.truckTrailer.get_xy()
         gamma = np.radians(self.headAngle - self.trailerAngle)
