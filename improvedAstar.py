@@ -67,7 +67,7 @@ def calcHeuristic(a, b):
 
 def is_collision(node, graph):
     try:
-        for i in range(16):
+        for i in range(20):
             pos1 = graph[node.y+i][node.x+i]
             pos2 = graph[node.y-i][node.x-i]
             pos3 = graph[node.y][node.x-i]
@@ -103,7 +103,8 @@ def paint(nodeList, c):
         
 def improved_astar(start,goal,obs):
     p = a_star(start,goal,obs)
-    paint(p,"-r")
+    #paint(p,"-r")
+    print(len(p))
     if len(p) > 2:
         for index, node in enumerate(p):
             if index <= len(p)-2:
