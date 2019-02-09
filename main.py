@@ -8,25 +8,53 @@ from improvedAstar import improved_astar, Node
 
 
 def start_prm():
-    sx = 100
-    sy = 500
-    gx = 500
-    gy = 100
-    img = mpimg.imread('map.png')
-    plt.imshow(img)
+
+
+    # start and goal position
+    sx = 100.0  # [m]
+    sy = 100.0  # [m]
+    gx = 500.0  # [m]
+    gy = 500.0  # [m]
+
+    ox = []
+    oy = []
+
+    for i in range(600):
+        ox.append(i)
+        oy.append(0.0)
+    for i in range(600):
+        ox.append(600.0)
+        oy.append(i)
+    for i in range(610):
+        ox.append(i)
+        oy.append(600.0)
+    for i in range(610):
+        ox.append(0.0)
+        oy.append(i)
+    for i in range(400):
+        ox.append(200.0)
+        oy.append(i)
+    for i in range(400):
+        ox.append(400.0)
+        oy.append(600.0 - i)
+
+    plt.plot(ox, oy, "sk")
     plt.plot(sx, sy, "^r")
     plt.plot(gx, gy, "^c")
+    plt.grid(True)
+    plt.axis("equal")
 
-    find_obstacles_from_image(img)
-    # prm = PRM(sx, sy, gx, gy, 5, ox, oy)
-    # rx, ry = prm.find_path()
-    # reversed_rx = rx[::-1]
-    # reversed_ry = ry[::-1]
-    # plt.plot(reversed_rx, reversed_ry, "-b")
-    #
-    # av = ArticulatedVehicle(plt, sx, sy)
-    # av.move(1, 0, 0.1)
-    # av.move_on_path(rx, ry)
+    prm = PRM(sx, sy, gx, gy, 50, ox, oy)
+    rx, ry = prm.find_path()
+    reversed_rx = rx[::-1]
+    reversed_ry = ry[::-1]
+    plt.plot(reversed_rx, reversed_ry, "-b")
+
+    av = ArticulatedVehicle(plt, sx, sy)
+    av.move(1, 0, 0.1)
+
+    straight_movements, turn_movements, length, saveX, saveY = av.move_on_path(rx, ry)
+    plt.plot(saveX, saveY, "-y")
 
     plt.show()
 
@@ -69,6 +97,8 @@ def run_astar():
     plt.imshow(img)
     plt.plot(sx, sy, "^r")
     plt.plot(gx, gy, "^c")
+    av = ArticulatedVehicle(plt, sx, sy)
+
     goal = Node(gx, gy, 0, 0)
     start = Node(sx, sy, 0, 0)
     nodelist = improved_astar(start, goal, img)
@@ -80,8 +110,14 @@ def run_astar():
     plt.plot(nx, ny, "-b")
     # move_by_input(av)
 
+
+    av.move(1, 0, 0.1)
+    av.move_on_path(nx, ny)
+
+
+
     plt.show()
 
 
-run_astar()
-#start_prm()
+#run_astar()
+start_prm()

@@ -92,7 +92,7 @@ class ArticulatedVehicle:
             newPoints = np.append(newPoints, [t], axis=0)
 
         self.truckHead.set_xy(newPoints)
-        self.plt.pause(0.01)
+       # self.plt.pause(0.01)
         self.__updateTrailer(angleChange, oldX, oldY, dt)
 
     def __updateTrailer(self, th, oldX, oldY, dt):
@@ -126,11 +126,14 @@ class ArticulatedVehicle:
             newV = np.append(newV, [t], axis=0)
 
         self.truckTrailer.set_xy(newV)
-        self.plt.pause(0.01)
+       # self.plt.pause(0.01)
 
     def move_on_path(self, rx, ry):
         straight_movements = 0  # backward or forward
         turn_movements = 0  # right or left
+        length = 0
+        saveX = []
+        saveY = []
 
         for i in range(len(rx) - 1):
             if rx[i + 1] > rx[i]:
@@ -159,10 +162,13 @@ class ArticulatedVehicle:
                     print("turn dangerous")
                     turn_movements += 1
 
-            angle = self.find_the_angle(rx[i], ry[i], rx[i + 1], ry[i + 1])
-            self.loop_through_angle(angle, rx[i + 1], ry[i + 1])
+            angle, diagonal = self.find_the_angle(rx[i], ry[i], rx[i + 1], ry[i + 1])
+            length += diagonal
+            #self.loop_through_angle(angle, rx[i + 1], ry[i + 1])
+            saveX.append(rx[i] + 20*np.cos(angle))
+            saveY.append(ry[i] + 20*np.sin(angle))
 
-        return straight_movements, turn_movements
+        return straight_movements, turn_movements, length, saveX, saveY
 
     def loop_through_angle(self, angle, x_to_reach, y_to_reach):
         if angle == 0 and self.headAngle == 0:
@@ -188,4 +194,4 @@ class ArticulatedVehicle:
         angle = math.acos(x / diagonal)
         adjust_to_the_head = abs(self.headAngle - np.rad2deg(angle))
 
-        return adjust_to_the_head
+        return adjust_to_the_head, diagonal

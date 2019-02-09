@@ -5,7 +5,7 @@ import scipy.spatial
 
 N_SAMPLE = 500
 N_KNN = 10
-MAX_EDGE_LEN = 30.0
+MAX_EDGE_LEN = 300.0
 
 
 class Node:
